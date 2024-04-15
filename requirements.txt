@@ -1,0 +1,1 @@
+pip install flask flask-login flasgger marshmallow python-dotenv requests
