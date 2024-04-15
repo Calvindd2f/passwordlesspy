@@ -1,4 +1,9 @@
-import os
+import logging
+
+from flasgger import Swagger
+from flask import Flask
+from flask_marshmallow import Marshmallow
+from . import passwordless
 import logging
 from flask import Flask, jsonify
 from logging.handlers import RotatingFileHandler
@@ -6,9 +11,27 @@ from passwordless import bp as passwordless_bp
 from passwordless_api import api_bp
 from config import Config, DevelopmentConfig, ProductionConfig
 
+logging.basicConfig(encoding="utf-8", level=logging.DEBUG)
+
+
+
+
 def create_app(config_class=DevelopmentConfig):
-    app = Flask(__name__)
+    app = Flask(__name__, static_url_path="/")
     app.config.from_object(config_class)
+    app.config.from_prefixed_env()
+    app.debug = True
+
+    Marshmallow(app)
+
+    Swagger(
+        app,
+        template_file="passwordless_api.json",
+        merge=True,
+        config={
+            "openapi": "3.0.1",
+        },
+    )
 
     # Setup logging
     if not app.debug:
@@ -32,6 +55,10 @@ def create_app(config_class=DevelopmentConfig):
     @app.errorhandler(500)
     def internal_server_error(e):
         return jsonify(error='Internal server error'), 500
+    
+    with app.app_context():
+        app.register_blueprint(passwordless.bp)
+        app.add_url_rule("/", "index", passwordless.index)
 
     return app
 
