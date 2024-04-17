@@ -1,35 +1,106 @@
-from flask import Blueprint, request, jsonify, abort
-from marshmallow import Schema, fields, validate, ValidationError
+from flask import make_response, request
+from flask.passwordless_bp import PasswordlessApiBlueprint
 
-api_bp = Blueprint('passwordless_api', __name__, url_prefix='/api')
+from passwordless import (
+    AliasSchema,
+    CredentialSchema,
+    DeleteCredentialSchema,
+    DeleteUserSchema,
+    PasswordlessError,
+    PasswordlessProblemDetailsSchema,
+    RegisteredTokenSchema,
+    RegisterTokenSchema,
+    SetAliasSchema,
+    UpdateAppsFeatureSchema,
+    UserSummarySchema,
+    VerifiedUserSchema,
+    VerifySignInSchema,
+)
 
-class LoginSchema(Schema):
-    email = fields.Email(required=True)
+api_bp = PasswordlessApiBlueprint(
+    "passwordless-api", __name__, url_prefix="/api"
+)
 
-@api_bp.route('/login', methods=['POST'])
+
+@api_bp.route("/login", methods=["POST"])
 def login():
-    schema = LoginSchema()
-    try:
-        # Validate and deserialize input
-        result = schema.load(request.get_json())
-    except ValidationError as err:
-        # Return a 400 response with the validation errors
-        return jsonify({'errors': err.messages}), 400
+    request_data = VerifySignInSchema().load(request.get_json())
 
-    try:
-        # Simulate API interaction
-        # Here you would integrate with the passwordless.dev API
-        # Placeholder for API client call, e.g., passwordless_client.login(email=result['email'])
-        simulated_response = {"message": "Check your email for a login link", "status": "success"}
-        return jsonify(simulated_response), 200
-    except Exception as e:
-        # Log the exception here
-        return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+    response_data = api_bp.api_client.sign_in(request_data)
 
-@api_bp.errorhandler(404)
-def handle_404(e):
-    return jsonify({'error': 'Resource not found', 'message': str(e)}), 404
+    return VerifiedUserSchema().dump(response_data)
 
-@api_bp.errorhandler(500)
-def handle_500(e):
-    return jsonify({'error': 'Internal server error', 'message': str(e)}), 500
+
+@api_bp.route("/register", methods=["POST"])
+def register():
+    request_data = RegisterTokenSchema().load(request.get_json())
+
+    response_data = api_bp.api_client.register_token(request_data)
+
+    return RegisteredTokenSchema().dump(response_data)
+
+
+@api_bp.errorhandler(PasswordlessError)
+def handle_passwordless_exception(e: PasswordlessError):
+    schema = PasswordlessProblemDetailsSchema()
+    response = make_response()
+    response.data = schema.dumps(e.problem_details)
+    response.content_type = "application/json"
+    return response
+
+
+@api_bp.route("/alias", methods=["POST"])
+def set_alias():
+    request_data = SetAliasSchema().load(request.get_json())
+
+    api_bp.api_client.set_alias(request_data)
+
+    return ""
+
+
+@api_bp.route("/alias/<user_id>", methods=["GET"])
+def get_aliases(user_id: str):
+    response_data = api_bp.api_client.get_aliases(user_id)
+
+    return AliasSchema(many=True).dump(response_data)
+
+
+@api_bp.route("/apps/feature", methods=["PUT"])
+def set_apps_feature():
+    request_data = UpdateAppsFeatureSchema().load(request.get_json())
+
+    api_bp.api_client.update_apps_feature(request_data)
+
+    return ""
+
+
+@api_bp.route("/credentials/<user_id>", methods=["GET"])
+def get_credentials(user_id: str):
+    response_data = api_bp.api_client.get_credentials(user_id)
+
+    return CredentialSchema(many=True).dump(response_data)
+
+
+@api_bp.route("/credentials", methods=["DELETE"])
+def delete_credentials():
+    request_data = DeleteCredentialSchema().load(request.get_json())
+
+    api_bp.api_client.delete_credential(request_data)
+
+    return ""
+
+
+@api_bp.route("/users", methods=["GET"])
+def get_users():
+    response_data = api_bp.api_client.get_users()
+
+    return UserSummarySchema(many=True).dump(response_data)
+
+
+@api_bp.route("/users", methods=["DELETE"])
+def delete_users():
+    request_data = DeleteUserSchema().load(request.get_json())
+
+    api_bp.api_client.delete_user(request_data)
+
+    return ""

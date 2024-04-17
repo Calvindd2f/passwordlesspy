@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, session, redirect, url_for, flash, request, jsonify
+from flask import render_template
+
 from .passwordless_api import api_bp
+from .passwordless_bp import PasswordlessBlueprint
 
-
-
-bp = Blueprint('passwordless', __name__, url_prefix='/passwordless')
+bp = PasswordlessBlueprint('passwordless', __name__, url_prefix='/passwordless')
 
 @bp.route('/')
 def index():
@@ -13,6 +13,8 @@ def index():
         return redirect(url_for('dashboard'))
 
     return render_template('passwordless.html', title='Welcome to Passwordless Authentication')
+
+bp.register_blueprint(api_bp)
 
 @bp.route('/logout')
 def logout():
@@ -51,4 +53,10 @@ def verify_login():
     return jsonify(success=True, userId='user_id')
 
 
-
+@bp.route("/")
+def index():
+    return render_template(
+        "passwordless.html",
+        passwordless_api_url=bp.api_config.url,
+        passwordless_api_key=bp.api_config.key,
+    )

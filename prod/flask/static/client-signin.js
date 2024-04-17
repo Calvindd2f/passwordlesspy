@@ -1,3 +1,5 @@
+import { Client } from '@passwordlessdev/passwordless-client';
+
 async function handleSigninClick(e) {
     e.preventDefault();
     const alias = document.getElementById("alias").value;
@@ -7,9 +9,8 @@ async function handleSigninClick(e) {
     /**
      * Initiate the Passwordless client with your public api key
      */
-    const p = new Passwordless.Client({
-        apiUrl: API_URL,
-        apiKey: API_KEY
+    const p = new Client({
+        apiKey: 'bitwardenpasskeyclvinie:public:48c37fc671044df69ac0ac1d36f4f8de'
     });
 
     try {
