@@ -1,6 +1,6 @@
-from flask import render_template
+from flask import render_template,request,redirect,url_for,session,flash,jsonify
 
-from .passwordless_api import api_bp
+from .passwordless_api import api_bp,login,generate_passwordless_token
 from .passwordless_bp import PasswordlessBlueprint
 
 bp = PasswordlessBlueprint('passwordless', __name__, url_prefix='/passwordless')
@@ -47,7 +47,7 @@ def create_token():
 
 @bp.route('/api/verify-login', methods=['GET'])
 def verify_login():
-    token = request.args.get('token')
+    request.args.get('token')
     # Verify the token with Passwordless.dev's API
     # Establish a session or whatever is needed after verification
     return jsonify(success=True, userId='user_id')

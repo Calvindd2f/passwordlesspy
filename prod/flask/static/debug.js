@@ -7,7 +7,7 @@ function Status(text) {
         text = JSON.stringify(text, null,2)
     }
 
-    var newLine =
+    let newLine =
         "[" + new Date().toLocaleTimeString() + "]: " + text + "\n";
     status.innerText = newLine + currentText;
 }

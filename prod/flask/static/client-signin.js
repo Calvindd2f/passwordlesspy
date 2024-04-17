@@ -18,10 +18,10 @@ async function handleSigninClick(e) {
          * Sign in - The Passwordless API and the browser initiates a sign in based on the alias
          */
 
-            //var userId = await fetch("user/id").then(r => r.json()); // get user id from database
+
 
         const {token, error} = await p.signinWithAlias(alias);
-        //const token = await p.signinWithId(486761564);
+
         if (error) {
             Status(JSON.stringify(error, null, 2));
             Status("Sign in failed, received the following error");
