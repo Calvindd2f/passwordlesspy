@@ -1,8 +1,8 @@
 import logging
 
-from flasgger import Swagger
+from flask import Swagger
 from flask import Flask
-from flask_marshmallow import Marshmallow
+from flask import Marshmallow
 from . import passwordless
 import logging
 from flask import Flask, jsonify
@@ -55,7 +55,7 @@ def create_app(config_class=DevelopmentConfig):
     @app.errorhandler(500)
     def internal_server_error(e):
         return jsonify(error='Internal server error'), 500
-    
+
     with app.app_context():
         app.register_blueprint(passwordless.bp)
         app.add_url_rule("/", "index", passwordless.index)
